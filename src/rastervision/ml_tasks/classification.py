@@ -45,7 +45,7 @@ class Classification(MLTask):
         stride = chip_size
         return extent.get_windows(chip_size, stride)
 
-    def post_process_predictions(self, labels, options):
+    def post_process_predictions(self, raster_source, labels, options):
         return labels
 
     def get_evaluation(self):

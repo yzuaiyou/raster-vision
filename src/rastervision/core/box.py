@@ -46,7 +46,8 @@ class Box():
 
     def rasterio_format(self):
         """Return Box in Rasterio format."""
-        return ((self.ymin, self.ymax), (self.xmin, self.xmax))
+        return ((int(self.ymin), int(self.ymax)), (int(self.xmin),
+                 int(self.xmax)))
 
     def tuple_format(self):
         return (self.ymin, self.xmin, self.ymax, self.xmax)

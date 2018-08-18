@@ -55,7 +55,7 @@ class MLTask(object):
         pass
 
     @abstractmethod
-    def post_process_predictions(self, labels, options):
+    def post_process_predictions(self, raster_source, labels, options):
         """Runs a post-processing step on labels at end of prediction.
 
         Args:
@@ -178,8 +178,8 @@ class MLTask(object):
                 print('.', end='', flush=True)
             print()
 
-            labels = self.post_process_predictions(label_store.get_labels(),
-                                                   options)
+            labels = self.post_process_predictions(raster_source,
+                label_store.get_labels(), options)
             label_store.set_labels(labels)
             label_store.save()
 

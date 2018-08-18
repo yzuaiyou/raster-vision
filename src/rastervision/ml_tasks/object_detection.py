@@ -133,11 +133,16 @@ class ObjectDetection(MLTask):
         stride = chip_size // 2
         return extent.get_windows(chip_size, stride)
 
-    def post_process_predictions(self, labels, options):
-        return ObjectDetectionLabels.prune_duplicates(
+    def post_process_predictions(self, raster_source, labels, options):
+        labels = ObjectDetectionLabels.prune_duplicates(
             labels,
             score_thresh=options.object_detection_options.score_thresh,
             merge_thresh=options.object_detection_options.merge_thresh)
+
+        labels = ObjectDetectionLabels.prune_nodata_labels(
+            raster_source, labels, nodata_thresh=0.0)
+
+        return labels
 
     def get_evaluation(self):
         return ObjectDetectionEvaluation()

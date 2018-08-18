@@ -52,12 +52,13 @@ class RasterTransformer(object):
                 chip = chip - means
                 chip = chip / stds
 
-                # Make zscores that fall between -3 and 3 span 0 to 255.
+                # Make zscores that fall between -3 and 3 span 1 to 255.
+                # Reserve 0 for nodata values.
                 chip += 3
                 chip /= 6
 
-                chip = np.clip(chip, 0, 1)
                 chip *= 255
+                chip = np.clip(chip, 1, 255)
                 chip = chip.astype(np.uint8)
 
                 chip[nodata] = 0

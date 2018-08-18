@@ -3,7 +3,7 @@ import numpy as np
 from object_detection.utils.np_box_list import BoxList
 from object_detection.utils.np_box_list_ops import (
     prune_non_overlapping_boxes, clip_to_window, concatenate,
-    non_max_suppression)
+    non_max_suppression, gather)
 
 from rastervision.core.box import Box
 from rastervision.core.labels import Labels
@@ -180,3 +180,20 @@ class ObjectDetectionLabels(Labels):
             iou_threshold=merge_thresh,
             score_threshold=score_thresh)
         return ObjectDetectionLabels.from_boxlist(pruned_boxlist)
+
+    @staticmethod
+    def prune_nodata_labels(raster_source, labels, nodata_thresh=0.1):
+        """Remove labels that are on top of too many nodata values."""
+        keep_inds = []
+        for ind, box in enumerate(labels.get_boxes()):
+            chip = raster_source.get_chip(box)
+            nodata_ratio = np.mean((chip.ravel() == 0))
+            if nodata_ratio <= nodata_thresh:
+                keep_inds.append(ind)
+
+        if len(keep_inds) == 0:
+            return ObjectDetectionLabels.make_empty()
+            
+        keep_inds = np.array(keep_inds)
+        return ObjectDetectionLabels.from_boxlist(
+            gather(labels.boxlist, keep_inds))
