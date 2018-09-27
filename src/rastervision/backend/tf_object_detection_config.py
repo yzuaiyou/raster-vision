@@ -109,38 +109,23 @@ class TFObjectDetectionConfig(BackendConfig):
 
     def preprocess_command(self, command_type, experiment_config,
                            context=None):
-        conf, io_def = super().preprocess_command(command_type,
-                                                  experiment_config, context)
+        conf = self
+        io_def = rv.core.CommandIODefinition()
         if command_type == rv.CHIP:
-            if not conf.training_data_uri:
-                conf.training_data_uri = experiment_config.chip_uri
-
+            conf.training_data_uri = experiment_config.chip_uri
             outputs = list(
                 map(lambda x: os.path.join(conf.training_data_uri, x),
                     CHIP_OUTPUT_FILES))
-
-            if self.debug:
-                outputs.extend(
-                    list(
-                        map(lambda x: os.path.join(conf.training_data_uri, x),
-                            DEBUG_CHIP_OUTPUT_FILES)))
-
             io_def.add_outputs(outputs)
         if command_type == rv.TRAIN:
-            if not conf.training_data_uri:
-                io_def.add_missing('Missing training_data_uri.')
-            else:
-                inputs = list(
-                    map(lambda x: os.path.join(conf.training_data_uri, x),
-                        CHIP_OUTPUT_FILES))
-                io_def.add_inputs(inputs)
+            conf.training_output_uri = experiment_config.train_uri
+            inputs = list(
+                map(lambda x: os.path.join(experiment_config.chip_uri, x),
+                    CHIP_OUTPUT_FILES))
+            io_def.add_inputs(inputs)
 
-            if not conf.training_output_uri:
-                conf.training_output_uri = experiment_config.train_uri
-
-            if not conf.model_uri:
-                conf.model_uri = os.path.join(conf.training_output_uri,
-                                              'model')
+            # TODO: Change? Or make configurable?
+            conf.model_uri = os.path.join(conf.training_output_uri, 'model')
             io_def.add_output(conf.model_uri)
 
         if command_type in [rv.PREDICT, rv.BUNDLE]:

@@ -54,7 +54,7 @@ class Task(object):
         pass
 
     @abstractmethod
-    def post_process_predictions(self, labels):
+    def post_process_predictions(self, labels, scene):
         """Runs a post-processing step on labels at end of prediction.
 
         Returns:
@@ -163,7 +163,6 @@ class Task(object):
         raster_source = scene.raster_source
         label_store = scene.prediction_label_store
         labels = label_store.empty_labels()
-
         windows = self.get_predict_windows(raster_source.get_extent())
 
         def predict_batch(predict_chips, predict_windows):
@@ -174,6 +173,7 @@ class Task(object):
             print('.' * len(predict_chips), end='', flush=True)
 
         batch_chips, batch_windows = [], []
+
         for window in windows:
             chip = raster_source.get_chip(window)
             if np.any(chip):
@@ -189,6 +189,4 @@ class Task(object):
         if len(batch_chips) > 0:
             predict_batch(batch_chips, batch_windows)
 
-        print()
-
-        return self.post_process_predictions(labels)
+        return self.post_process_predictions(labels, scene)

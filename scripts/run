@@ -64,6 +64,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]
 then
     docker run ${RUNTIME} ${NAME} --rm -it ${TENSORBOARD} ${AWS} \
         -v "$SRC":/opt/src \
+        -v ${HOME}/.rastervision/:/root/.rastervision:ro \
         -v ${RASTER_VISION_DATA_DIR}:/opt/data \
         ${IMAGE} "${@:1}"
 fi
