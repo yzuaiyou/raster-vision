@@ -6,7 +6,7 @@ from rastervision.data.label_source import (LabelSourceConfig,
                                             LabelSourceConfigBuilder,
                                             SemanticSegmentationRasterSource)
 from rastervision.protos.label_source_pb2 import LabelSourceConfig as LabelSourceConfigMsg
-from rastervision.data.raster_source import RasterSourceConfig
+from rastervision.data.raster_source import RasterSourceConfig, GeoJSONSourceConfig
 
 
 class SemanticSegmentationRasterSourceConfig(LabelSourceConfig):
@@ -18,6 +18,10 @@ class SemanticSegmentationRasterSourceConfig(LabelSourceConfig):
 
     def to_proto(self):
         msg = super().to_proto()
+
+        source_class_items = None
+        if self.source_class_map is not None:
+            source_class_items = self.source_class_map.to_proto()
         opts = LabelSourceConfigMsg.SemanticSegmentationRasterSource(
             source=self.source.to_proto(),
             source_class_items=self.source_class_map.to_proto(),
@@ -41,6 +45,7 @@ class SemanticSegmentationRasterSourceConfig(LabelSourceConfig):
 
         (new_raster_source, sub_io_def) = self.source.preprocess_command(
             command_type, experiment_config, context)
+
         io_def.merge(sub_io_def)
         b = b.with_raster_source(new_raster_source)
 
@@ -87,8 +92,8 @@ class SemanticSegmentationRasterSourceConfigBuilder(LabelSourceConfigBuilder):
             b.config['source'] = source
         elif isinstance(source, str):
             provider = rv._registry.get_default_raster_source_provider(source)
-            b.config['source'] = provider.construct(
-                source, channel_order=channel_order)
+            source = provider.construct(source, channel_order=channel_order)
+            b.config['source'] = source
         else:
             raise rv.ConfigError(
                 'source must be either string or RasterSourceConfig, '
@@ -122,12 +127,15 @@ class SemanticSegmentationRasterSourceConfigBuilder(LabelSourceConfigBuilder):
         return b
 
     def validate(self):
-        if self.config.get('source') is None:
+        source = self.config.get('source')
+        source_class_map = self.config.get('source_class_map')
+
+        if source is None:
             raise rv.ConfigError(
                 'You must set the source for SemanticSegmentationRasterSourceConfig'
                 ' Use "with_raster_source".')
 
-        if self.config.get('source_class_map') is None:
+        if type(source) != GeoJSONSourceConfig and source_class_map is None:
             raise rv.ConfigError(
                 'You must set the source_class_map for '
                 'SemanticSegmentationRasterSourceConfig. Use "with_source_class_map".'

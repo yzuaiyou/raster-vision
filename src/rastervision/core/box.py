@@ -58,9 +58,6 @@ class Box():
     def tuple_format(self):
         return (self.ymin, self.xmin, self.ymax, self.xmax)
 
-    def shapely_format(self):
-        return (self.xmin, self.ymin, self.xmax, self.ymax)
-
     def to_int(self):
         return Box(
             int(self.ymin), int(self.xmin), int(self.ymax), int(self.xmax))
@@ -186,7 +183,7 @@ class Box():
         return Box(tup[0], tup[1], tup[2], tup[3])
 
     def to_shapely(self):
-        return ShapelyBox(*(self.shapely_format()))
+        return ShapelyBox(*(self.tuple_format()))
 
     def reproject(self, transform_fn):
         """Reprojects this box based on a transform function.

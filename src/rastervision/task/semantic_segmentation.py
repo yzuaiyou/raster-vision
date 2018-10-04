@@ -10,7 +10,7 @@ def get_random_sample_train_windows(label_store, chip_size, class_map, extent, c
     prob = chip_options.negative_survival_probability
     target_count_threshold = chip_options.target_count_threshold
     target_classes = chip_options.target_classes
-    number_of_chips = chip_options.number_of_chips
+    chips_per_scene = chip_options.chips_per_scene
 
     if not target_classes:
         all_class_ids = [
@@ -20,7 +20,7 @@ def get_random_sample_train_windows(label_store, chip_size, class_map, extent, c
 
     windows = []
     attempts = 0
-    while (attempts < number_of_chips):
+    while (attempts < chips_per_scene):
         candidate_window = extent.make_random_square(chip_size)
         if not filter_by_windows([candidate_window]):
             continue
@@ -28,7 +28,7 @@ def get_random_sample_train_windows(label_store, chip_size, class_map, extent, c
 
         if (prob >= 1.0):
             windows.append(candidate_window)
-        elif attempts == number_of_chips and len(windows) == 0:
+        elif attempts == chips_per_scene and len(windows) == 0:
             windows.append(candidate_window)
         else:
             good = label_store.enough_target_pixels(
@@ -70,6 +70,31 @@ class SemanticSegmentation(Task):
         chip_size = self.config.chip_size
 
         chip_options = self.config.chip_options
+        prob = chip_options.negative_survival_probability
+        target_count_threshold = chip_options.target_count_threshold
+        target_classes = chip_options.target_classes
+        chips_per_scene = chip_options.chips_per_scene
+
+        if not target_classes:
+            all_class_ids = [
+                item.id for item in self.config.class_map.get_items()
+            ]
+            target_classes = all_class_ids
+
+        windows = []
+        attempts = 0
+        while (attempts < chips_per_scene):
+            attempts = attempts + 1
+            candidate_window = extent.make_random_square(chip_size)
+            if (prob >= 1.0):
+                windows.append(candidate_window)
+            elif attempts == chips_per_scene and len(windows) == 0:
+                windows.append(candidate_window)
+            else:
+                good = label_store.enough_target_pixels(
+                    candidate_window, target_count_threshold, target_classes)
+                if good or (np.random.rand() < prob):
+                    windows.append(candidate_window)
 
         if chip_options.window_method == 'random_sample':
             return get_random_sample_train_windows(label_store,
@@ -118,14 +143,7 @@ class SemanticSegmentation(Task):
         return extent.get_windows(chip_size, chip_size)
 
     def post_process_predictions(self, labels, scene):
-        """Post-process predictions.
-
-        Cut off "junk" predictions made off the edge of scene.raster_source
-
-        Returns: SemanticSegmentationLabels
-        """
-        extent = scene.raster_source.get_extent()
-        return labels.get_clipped_labels(extent)
+        return labels
 
     def save_debug_predict_image(self, scene, debug_dir_uri):
         # TODO implement this

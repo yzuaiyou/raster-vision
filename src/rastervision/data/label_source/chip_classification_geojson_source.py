@@ -1,62 +1,12 @@
 import numpy as np
 from shapely.strtree import STRtree
-from shapely import geometry
 
 from rastervision.data import ChipClassificationLabels
 from rastervision.data.label_source import LabelSource
 from rastervision.data.label_source.utils import (
     add_classes_to_geojson, load_label_store_json,
     geojson_to_chip_classification_labels)
-
-
-def get_str_tree(geojson_dict, crs_transformer):
-    """Get shapely STRtree data structure for a set of polygons.
-
-    Args:
-        geojson_dict: dict in GeoJSON format with class_id property for each
-            polygon
-        crs_transformer: CRSTransformer used to convert from map to pixel
-            coords
-
-    Returns:
-        shapely.strtree.STRtree
-    """
-    features = geojson_dict['features']
-    json_polygons = []
-    class_ids = []
-
-    for feature in features:
-        # Convert polygon to pixel coords.
-        geom_type = feature['geometry']['type']
-        coordinates = feature['geometry']['coordinates']
-        if geom_type == 'MultiPolygon':
-            for polygon in coordinates:
-                shell = polygon[0]
-                polygon = [crs_transformer.map_to_pixel(p) for p in shell]
-                json_polygons.append(polygon)
-        elif geom_type == 'Polygon':
-            shell = coordinates[0]
-            polygon = [crs_transformer.map_to_pixel(p) for p in shell]
-            json_polygons.append(polygon)
-        else:
-            raise Exception(
-                'Geometries of type {} are not supported in chip classification \
-                labels.'.format(geom_type))
-
-        properties = feature.get('properties', {})
-        class_ids.append(properties.get('class_id', 1))
-
-    # Convert polygons to shapely
-    polygons = []
-    for json_polygon, class_id in zip(json_polygons, class_ids):
-        polygon = geometry.Polygon([(p[0], p[1]) for p in json_polygon])
-        # Trick to handle self-intersecting polygons which otherwise cause an
-        # error.
-        polygon = polygon.buffer(0)
-        polygon.class_id = class_id
-        polygons.append(polygon)
-
-    return STRtree(polygons)
+from rastervision.data.utils import geojson_to_shapes
 
 
 def infer_cell(str_tree, cell, ioa_thresh, use_intersection_over_cell,
@@ -140,7 +90,7 @@ def infer_labels(geojson_dict, crs_transformer, extent, cell_size, ioa_thresh,
     Returns:
         ChipClassificationLabels
     """
-    str_tree = get_str_tree(geojson_dict, crs_transformer)
+    str_tree = STRtree(geojson_to_shapes(geojson_dict, crs_transformer))
     labels = ChipClassificationLabels()
 
     cells = extent.get_windows(cell_size, cell_size)
