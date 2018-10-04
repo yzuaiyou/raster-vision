@@ -5,9 +5,11 @@ import rasterio
 from PIL import Image
 import numpy as np
 import click
+import logging
 
 from rv.utils import save_geojson, make_empty_dir
 
+log = logging.getLogger(__name__)
 
 def png_to_geojson(geotiff_path, label_png_path, output_path, object_half_len):
     """Convert COWC PNG labels to GeoJSON format.
@@ -68,7 +70,7 @@ def prepare_potsdam(geotiff_dir, label_png_dir, output_dir, object_half_len):
             label_path,
             output_path,
             object_half_len=object_half_len)
-        print('Saved {} with {} boxes.'.format(output_path,
+        log.info('Saved {} with {} boxes.'.format(output_path,
                                                boxlist.num_boxes()))
 
 

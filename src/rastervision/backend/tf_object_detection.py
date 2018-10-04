@@ -11,6 +11,7 @@ import atexit
 import glob
 import re
 import uuid
+import logging
 
 from PIL import Image
 import numpy as np
@@ -25,6 +26,8 @@ from rastervision.utils.misc import save_img
 
 TRAIN = 'train'
 VALIDATION = 'validation'
+
+log = logging.getLogger(__name__)
 
 
 def save_debug_image(im, labels, class_map, output_path):
@@ -126,12 +129,10 @@ def merge_tf_records(output_path, src_records):
     import tensorflow as tf
 
     with tf.python_io.TFRecordWriter(output_path) as writer:
-        print('Merging TFRecords', end='', flush=True)
+        log.info('Merging TFRecords', end='', flush=True)
         for src_record in src_records:
             for string_record in tf.python_io.tf_record_iterator(src_record):
                 writer.write(string_record)
-            print('.', end='', flush=True)
-        print()
 
 
 def make_tf_class_map(class_map):
@@ -155,12 +156,10 @@ def save_tf_class_map(tf_class_map, class_map_path):
 
 def make_tf_examples(training_data, class_map):
     tf_examples = []
-    print('Creating TFRecord', end='', flush=True)
+    log.info('Creating TFRecord', end='', flush=True)
     for chip, window, labels in training_data:
         tf_example = create_tf_example(chip, window, labels, class_map)
         tf_examples.append(tf_example)
-        print('.', end='', flush=True)
-    print()
     return tf_examples
 
 
@@ -196,20 +195,18 @@ def make_debug_images(record_path, class_map, output_dir):
 
     make_dir(output_dir, check_empty=True)
 
-    print('Generating debug chips', end='', flush=True)
+    log.info('Generating debug chips', end='', flush=True)
     tfrecord_iter = tf.python_io.tf_record_iterator(record_path)
     for ind, example in enumerate(tfrecord_iter):
         example = tf.train.Example.FromString(example)
         im, labels = parse_tfexample(example)
         output_path = join(output_dir, '{}.png'.format(ind))
         save_debug_image(im, labels, class_map, output_path)
-        print('.', end='', flush=True)
-    print()
 
 
 def terminate_at_exit(process):
     def terminate():
-        print('Terminating {}...'.format(process.pid))
+        log.info('Terminating {}...'.format(process.pid))
         process.terminate()
 
     atexit.register(terminate)
@@ -276,9 +273,9 @@ def export_inference_graph(train_root_dir,
                  '/opt/tf-models/object_detection/export_inference_graph.py')
     checkpoint_path = get_last_checkpoint_path(train_root_dir)
     if checkpoint_path is None:
-        print('No checkpoints could be found.')
+        log.warning('No checkpoints could be found.')
     else:
-        print('Exporting checkpoint {}...'.format(checkpoint_path))
+        log.info('Exporting checkpoint {}...'.format(checkpoint_path))
 
         train_process = Popen([
             'python', export_py, '--input_type', 'image_tensor',

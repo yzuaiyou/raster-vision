@@ -1,9 +1,11 @@
 import os
 from tempfile import TemporaryDirectory
+import logging
 
 from rastervision.runner import ExperimentRunner
 from rastervision.utils.files import save_json_config
 
+log = logging.getLogger(__name__)
 
 class LocalExperimentRunner(ExperimentRunner):
     def __init__(self, tmp_dir=None):
@@ -17,7 +19,7 @@ class LocalExperimentRunner(ExperimentRunner):
                 command_root_uri = command_config.root_uri
                 command_uri = os.path.join(command_root_uri,
                                            'command-config.json')
-                print('Saving command configuration to {}...'.format(
+                log.info('Saving command configuration to {}...'.format(
                     command_uri))
                 save_json_config(command_config.to_proto(), command_uri)
 

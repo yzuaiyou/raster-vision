@@ -3,14 +3,17 @@ import sys
 from tempfile import TemporaryDirectory
 
 import click
+import logging
 
 import rastervision as rv
 from rastervision.experiment import (ExperimentLoader, LoaderError)
 from rastervision.runner import (ExperimentRunner)
 
+log = logging.getLogger(__name__)
 
 def print_error(msg):
-    click.echo(click.style(msg, fg='red'), err=True)
+    log.error(msg)
+    # click.echo(click.style(msg, fg='red'), err=True)
 
 
 @click.group()

@@ -2,9 +2,11 @@ import rastervision as rv
 
 from abc import (ABC, abstractmethod)
 from typing import (List, Union)
+import logging
 
 from rastervision.runner import (CommandDefinition, CommandDAG)
 
+log = logging.getLogger(__name__)
 
 class ExperimentRunner(ABC):
     def run(self,
@@ -26,13 +28,11 @@ class ExperimentRunner(ABC):
         if dry_run:
             not_requested = set(_command_definitions) - set(command_definitions)
             if not_requested:
-                print()
-                print('Not requsted:')
+                log.info('Not requsted:')
                 for command in not_requested:
                     command_type = command.command_config.command_type
                     experiment_id = command.experiment_id
-                    print('{} from {}'.format(command_type, experiment_id))
-                print()
+                    log.info('{} from {}'.format(command_type, experiment_id))
 
         # Check if there are any unsatisfied inputs.
         missing_inputs = CommandDefinition.get_missing_inputs(
@@ -81,13 +81,11 @@ class ExperimentRunner(ABC):
         if dry_run:
             skipped_commands.extend(command_dag.skipped_commands)
             if skipped_commands:
-                print()
-                print('Skipped due to output conflicts:')
+                log.info('Skipped due to output conflicts:')
                 for command in skipped_commands:
                     command_type = command.command_config.command_type
                     experiment_id = command.experiment_id
-                    print('{} from {}'.format(command_type, experiment_id))
-                print()
+                    log.info('{} from {}'.format(command_type, experiment_id))
 
         # Save experiment configs
         experiments_by_id = dict(map(lambda e: (e.id, e), experiments))
@@ -100,13 +98,11 @@ class ExperimentRunner(ABC):
                     experiment.fully_resolve().save_config()
 
         if dry_run:
-            print()
-            print('To be run:')
+            log.info('To be run:')
             for command in command_dag.get_sorted_commands():
                 command_type = command.command_type
                 root_uri = command.root_uri
-                print('{} in {}'.format(command_type, root_uri))
-            print()
+                log.info('{} in {}'.format(command_type, root_uri))
         else:
             self._run_experiment(command_dag)
 

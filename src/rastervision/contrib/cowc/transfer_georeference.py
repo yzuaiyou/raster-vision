@@ -3,11 +3,14 @@
 import os
 import re
 import sys
+import logging
 
 from subprocess import check_output, call
 
+log = logging.getLogger(__name__)
+
 if not len(sys.argv) >= 4:
-    print('Usage: {} <input_rgb.tif> <input_label.tif> <output_label.tif>'.
+    log.info('Usage: {} <input_rgb.tif> <input_label.tif> <output_label.tif>'.
           format(sys.argv[0]))
     exit()
 
